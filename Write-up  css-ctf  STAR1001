@@ -1,0 +1,90 @@
+STAR1001 — CTF Write-up
+
+Overview
+
+The challenge was a web-based CTF challenge running on:
+
+http://34.116.80.78:9981/
+
+The goal was to inspect the web application, identify a suspicious encoded string, and decode it to retrieve the flag.
+
+1. Initial Request
+
+I started by sending a basic `GET` request to the root endpoint using Burp Suite:
+
+GET / HTTP/1.1
+Host: 34.116.80.78:9981
+
+The server returned:
+
+
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: text/html
+
+The response body contained a simple HTML page.
+
+
+2. Analyzing the HTML
+
+The HTML did not contain the flag directly, but there was an interesting external resource:
+
+<link rel="stylesheet" href="style.css">
+
+
+Since external resources can sometimes contain useful information in CTF challenges, I requested the CSS file.
+
+3. Inspecting `style.css`
+
+Using Burp Repeater, I sent:
+
+GET /style.css HTTP/1.1
+Host: 34.116.80.78:9981
+Connection: close
+
+
+The response contained a suspicious string:
+
+Q1NTQ1RGJTdCd2VfQlUxTFRfdGhpc19jaXR5X2Zyb21fcjBja19hbmRfUjAxMSU3RA
+
+The character set and structure suggested that this could be Base64-encoded data.
+
+4. Base64 Decoding
+
+I decoded the string using:
+
+echo 'Q1NTQ1RGJTdCd2VfQlUxTFRfdGhpc19jaXR5X2Zyb21fcjBja19hbmRfUjAxMSU3RA' | base64 -d
+
+The result was:
+
+CSSCTF%7Bwe_BU1LT_this_city_from_r0ck_and_R011%7D
+
+The output was not yet the final flag because `%7B` and `%7D` are URL-encoded characters.
+
+
+
+5. URL Decoding
+
+After URL-decoding the result:
+
+
+CSSCTF{we_BU1LT_this_city_from_r0ck_and_R011}
+
+
+The flag was revealed.
+
+
+
+6. Flag
+
+
+CSSCTF{we_BU1LT_this_city_from_r0ck_and_R011}
+
+
+
+
+Takeaways
+
+This challenge was a good reminder to inspect **all referenced resources**, not just the main HTML response. Even when the main page appears to contain no useful information, files such as CSS and JavaScript may contain hidden clues.
+
+It was also important not to stop after the first decoding step. The Base64-decoded output still contained URL encoding, requiring a second decoding step to obtain the final flag.
